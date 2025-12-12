@@ -19,7 +19,7 @@ public class PiExperimentRunner {
 
             SimulationConfig seqConfig = new SimulationConfig(N, numTasks, 1);
             long startSeq = System.nanoTime();
-            double seqEstimate = seqEstimator.estimate(seqConfig);
+            double seqEstimate = seqEstimator.estimatePi(seqConfig);
             long seqTime = System.nanoTime() - startSeq;
             double seqError = Math.abs(seqEstimate - Math.PI);
 
@@ -50,6 +50,6 @@ public class PiExperimentRunner {
             System.out.println("\n" + "=".repeat(60) + "\n");
         }
 
-        System.out.println("\n End of Experiments");
+        System.out.println("\n END OF EXPERIMENTS ");
     }
 }
