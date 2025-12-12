@@ -18,7 +18,7 @@ public class PiExperimentRunner {
 
             SimulationConfig seqConfig = new SimulationConfig(N, numTasks, 1);
             long startSeq = System.nanoTime();
-            double seqEstimate = seqEstimator.estimate(seqConfig);
+            double seqEstimate = seqEstimator.estimatePi(seqConfig);
             long seqTime = System.nanoTime() - startSeq;
             double seqError = Math.abs(Math.PI - seqEstimate);
 
