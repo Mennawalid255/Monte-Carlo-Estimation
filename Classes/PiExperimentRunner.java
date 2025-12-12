@@ -6,10 +6,11 @@ public class PiExperimentRunner {
 
         SequentialPiEstimator seqEstimator = new SequentialPiEstimator();
 
-        System.out.println("PI EXPERIMENT RESULTS \n");
+        System.out.println("PI Experiment Results \n");
 
         for (long N : pointSizes) {
             System.out.println("N = " + N);
+            
             
             System.out.println("\nSequential Implementation:");
             System.out.printf("%-10s %-10s %-10s %-10s %-10s\n",
@@ -20,12 +21,13 @@ public class PiExperimentRunner {
             long startSeq = System.nanoTime();
             double seqEstimate = seqEstimator.estimate(seqConfig);
             long seqTime = System.nanoTime() - startSeq;
-            double seqError = Math.abs(Math.PI - seqEstimate);
+            double seqError = Math.abs(seqEstimate - Math.PI);
 
             System.out.printf("%-10s %-10.6f %-10.6g %-10d %-10s\n",
                     "Sequential", seqEstimate, seqError, seqTime / 1_000_000, "1.00x");
 
 
+            
             System.out.println("\nParallel Implementation:");
             System.out.printf("%-10s %-10s %-10s %-10s %-10s\n",
                     "Threads", "Estimate", "Error", "Time(ms)", "Speedup");
@@ -38,7 +40,7 @@ public class PiExperimentRunner {
                 long startPar = System.nanoTime();
                 double parEstimate = parEstimator.estimate(parConfig);
                 long parTime = System.nanoTime() - startPar;
-                double parError = Math.abs(Math.PI - parEstimate);
+                double parError = Math.abs(parEstimate - Math.PI);
                 double speedup = (double) seqTime / parTime;
 
 
@@ -48,6 +50,6 @@ public class PiExperimentRunner {
             System.out.println("\n" + "=".repeat(60) + "\n");
         }
 
-        System.out.println("\n END OF EXPERIMENTS ");
+        System.out.println("\n End of experiments");
     }
 }
