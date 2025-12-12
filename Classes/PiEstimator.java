@@ -1,14 +1,3 @@
-/**
- * Interface for π estimation algorithms.
- * This interface is designed to be compatible with existing
- * SequentialPiEstimator and ParallelPiEstimator classes.
- * 
- * Both classes already have the method:
- *   public double estimate(SimulationConfig config)
- * 
- * This interface formalizes that contract without requiring
- * any changes to the existing implementations.
- */
 public interface PiEstimator {
     
     /**
