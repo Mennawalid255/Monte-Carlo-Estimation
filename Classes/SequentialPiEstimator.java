@@ -2,7 +2,7 @@ import java.util.Random;
 
 public class SequentialPiEstimator implements PiEstimator {
     @Override
-    public double estimatePi(SimulationConfig config) {
+    public double estimate(SimulationConfig config) {
         long totalPoints = config.getTotalPoints();
         Random random = new Random();
         long circlePoints = 0;

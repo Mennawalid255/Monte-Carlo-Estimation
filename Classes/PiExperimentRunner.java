@@ -19,11 +19,11 @@ public class PiExperimentRunner {
 
             SimulationConfig seqConfig = new SimulationConfig(N, numTasks, 1);
             long startSeq = System.nanoTime();
-            double seqEstimate = seqEstimator.estimatePi(seqConfig);
+            final double seqEstimate = seqEstimator.estimate(seqConfig);
             long seqTime = System.nanoTime() - startSeq;
             double seqError = Math.abs(seqEstimate - Math.PI);
 
-            System.out.printf("%-10s %-10.6f %-10.6g %-10d %-10s\n",
+            System.out.printf("%-10s %-10.6f %-10.5f %-10d %-10s\n",
                     "Sequential", seqEstimate, seqError, seqTime / 1_000_000, "1.00x");
 
 
@@ -44,12 +44,12 @@ public class PiExperimentRunner {
                 double speedup = (double) seqTime / parTime;
 
 
-                System.out.printf("%-10d %-10.6f %-10.6g %-10d %-10.2fx\n",
+                System.out.printf("%-10d %-10.6f %-10.5f %-10d %-1.2fx\n",
                         threads, parEstimate, parError, parTime / 1_000_000, speedup);
             }
             System.out.println("\n" + "=".repeat(60) + "\n");
         }
 
-        System.out.println("\n END OF EXPERIMENTS ");
+        System.out.println("\n End of Experiments ");
     }
 }

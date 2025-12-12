@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ParallelPiEstimator extends PiEstimator {
+public class ParallelPiEstimator implements PiEstimator {
 
     @Override 
             public double estimate(SimulationConfig config) {
