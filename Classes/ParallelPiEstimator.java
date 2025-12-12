@@ -6,13 +6,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ParallelPiEstimator extends PiEstimator {
+public class ParallelPiEstimator implements PiEstimator {
 
     @Override 
             public double estimate(SimulationConfig config) {
             long totalPoints = config.getTotalPoints();
             int numTasks = config.getNumTasks();
             int numThreads = config.getNumThreads();
+
              // Create Thread pool
              ExecutorService executor = Executors.newFixedThreadPool(numThreads);
             
@@ -21,18 +22,21 @@ public class ParallelPiEstimator extends PiEstimator {
              
              // divide the work 
              long pointsPerTask = totalPoints / numTasks;
+             long remainingPoints = totalPoints % numTasks;
+
 
              //  Submit tasks
                 for (int i = 0; i < numTasks; i++) {
-    
+                    final long taskPoints = pointsPerTask + (i < remainingPoints ? 1 : 0);
+
                     Callable<Long> task = () -> {
                         long insideCount = 0;
                         ThreadLocalRandom rnd = ThreadLocalRandom.current();
     
                         // Each task processes "pointsPerTask" points
-                        for (long p = 0; p < pointsPerTask; p++) {
-                            double x = rnd.nextDouble();
-                            double y = rnd.nextDouble();
+                        for (long p = 0; p < taskPoints; p++) {
+                            double x = rnd.nextDouble() * 2 - 1;
+                            double y = rnd.nextDouble() * 2 - 1;
                             if (x*x + y*y <= 1.0) insideCount++;
                         }
     
