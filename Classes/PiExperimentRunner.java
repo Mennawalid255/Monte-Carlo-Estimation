@@ -6,7 +6,7 @@ public class PiExperimentRunner {
 
         SequentialPiEstimator seqEstimator = new SequentialPiEstimator();
 
-        System.out.println("PI EXPERIMENT RESULTS \n");
+        System.out.println("PI Experiment Results \n");
 
         for (long N : pointSizes) {
             System.out.println("N = " + N);
@@ -48,6 +48,6 @@ public class PiExperimentRunner {
             System.out.println("\n" + "=".repeat(60) + "\n");
         }
 
-        System.out.println("\n END OF EXPERIMENTS ");
+        System.out.println("\n End of Experiments ");
     }
 }
