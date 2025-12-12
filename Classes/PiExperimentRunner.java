@@ -50,6 +50,6 @@ public class PiExperimentRunner {
             System.out.println("\n" + "=".repeat(60) + "\n");
         }
 
-        System.out.println("\n End of experiments");
+        System.out.println("\n End of Experiments");
     }
 }
