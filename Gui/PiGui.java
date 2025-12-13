@@ -1,3 +1,4 @@
+package Gui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -13,6 +14,7 @@ public class PiGui extends JFrame {
     private final JButton stopButton   = new JButton("Stop");
     private final JButton resetButton  = new JButton("Reset");
     private final JSlider speedSlider  = new JSlider(1, 10, 5);
+    private GuiAdapter adapter;
 
     private volatile boolean running = false;
     private Thread worker;
@@ -41,6 +43,9 @@ public class PiGui extends JFrame {
         pack();
         setLocationRelativeTo(null);
 
+        adapter = new GuiAdapter();
+        adapter.connectComponents(pointsField, threadsField, startButton, resultLabel, drawingPanel);
+
         // listeners
         startButton.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
@@ -59,53 +64,92 @@ public class PiGui extends JFrame {
         });
     }
 
-    private void startSimulation() {
-        if (running) return;
-        running = true;
-        worker = new Thread(() -> {
-            ThreadLocalRandom rnd = ThreadLocalRandom.current();
-            while (running) {
-                int batch = speedSlider.getValue() * 200; // more -> faster
-                for (int i = 0; i < batch; i++) {
-                    double x = rnd.nextDouble() * 2 - 1;
-                    double y = rnd.nextDouble() * 2 - 1;
-                    boolean inside = (x * x + y * y) <= 1.0;
-                    drawPanel.addPoint(x, y, inside);
-                }
-                double est = drawPanel.getPiEstimate();
-                long   n   = drawPanel.getTotalPoints();
-                SwingUtilities.invokeLater(() -> {
-                    estimateLabel.setText(String.format("π estimate: %.6f", est));
-                    countLabel.setText("Points: " + n);
-                    drawPanel.repaint();
-                });
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                }
+private void startSimulation() {
+    if (running) return;
+    running = true;
+    
+    worker = new Thread(() -> {
+        // Create instances of YOUR estimator classes
+        SequentialPiEstimator seqEstimator = new SequentialPiEstimator();
+        ParallelPiEstimator parEstimator = new ParallelPiEstimator();
+        
+        // Determine which estimator to use (add a radio button in your GUI for this)
+        // For now, let's use parallel with 4 threads
+        boolean useParallel = true; // Change this based on your GUI's selection
+        
+        while (running) {
+            int batch = speedSlider.getValue() * 200;
+            
+            // Use YOUR SimulationConfig class (adjust parameters as needed)
+            SimulationConfig config = new SimulationConfig(batch, 4, 4); // batch points, 4 tasks, 4 threads
+            
+            // Start timing
+            long startTime = System.nanoTime();
+            
+            // Run the estimator
+            double estimate;
+            if (useParallel) {
+                estimate = parEstimator.estimate(config); // Use your ParallelPiEstimator
+            } else {
+                estimate = seqEstimator.estimate(config); // Use your SequentialPiEstimator
             }
-        });
-        worker.start();
-    }
-
-    private void stopSimulation() {
-        running = false;
-    }
-
-    private void resetSimulation() {
-        stopSimulation();
-        drawPanel.reset();
-        estimateLabel.setText("π estimate: n/a");
-        countLabel.setText("Points: 0");
-        drawPanel.repaint();
-    }
-
-    private static class DrawPanel extends JPanel {
-        private static final int SIZE = 400;
-
-        private long totalPoints = 0;
-        private long insidePoints = 0;
+            
+            long duration = System.nanoTime() - startTime;
+            
+            // Calculate how many points would be inside based on the estimate
+            // π = 4 * (inside/total) → inside = (π * total) / 4
+            long insideCount = Math.round((estimate * batch) / 4.0);
+            
+            // Generate visualization points
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            
+            // Keep track of actual inside points generated
+            long actualInside = 0;
+            
+            for (int i = 0; i < batch; i++) {
+                double x = rnd.nextDouble() * 2 - 1;
+                double y = rnd.nextDouble() * 2 - 1;
+                boolean inside = (x * x + y * y) <= 1.0;
+                
+                // If we need to adjust to match the estimator's count
+                if (i < insideCount && !inside) {
+                    // Force this point to be inside (for visualization accuracy)
+                    // Generate a point inside the circle
+                    do {
+                        x = rnd.nextDouble() * 2 - 1;
+                        y = rnd.nextDouble() * 2 - 1;
+                    } while (x * x + y * y > 1.0);
+                    inside = true;
+                } else if (i >= insideCount && inside) {
+                    // Force this point to be outside (for visualization accuracy)
+                    do {
+                        x = rnd.nextDouble() * 2 - 1;
+                        y = rnd.nextDouble() * 2 - 1;
+                    } while (x * x + y * y <= 1.0);
+                    inside = false;
+                }
+                
+                if (inside) actualInside++;
+                drawPanel.addPoint(x, y, inside);
+            }
+            
+            // Update GUI - use the estimator's result for the label
+            SwingUtilities.invokeLater(() -> {
+                estimateLabel.setText(String.format("π estimate: %.6f (via estimator)", estimate));
+                countLabel.setText(String.format("Points: %d (Inside: %d)", 
+                    drawPanel.getTotalPoints(), actualInside));
+                drawPanel.repaint();
+            });
+            
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    });
+    worker.start();
+}
 
         // store only last few thousand points for drawing
         private static final int MAX_POINTS = 5000;
