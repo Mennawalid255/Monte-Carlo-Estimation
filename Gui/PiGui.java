@@ -5,7 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Gui extends JFrame {
+public class PiGui extends JFrame {
 
     private final DrawPanel drawPanel = new DrawPanel();
     private final JLabel estimateLabel = new JLabel("π estimate: n/a");
@@ -19,7 +19,7 @@ public class Gui extends JFrame {
     private volatile boolean running = false;
     private Thread worker;
 
-    public Gui() {
+    public PiGui() {
         super("Monte Carlo π Estimator");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -226,6 +226,6 @@ private void startSimulation() {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Gui().setVisible(true));
+        SwingUtilities.invokeLater(() -> new PiGui().setVisible(true));
     }
 }
