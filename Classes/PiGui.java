@@ -23,7 +23,9 @@ public class PiGui extends JFrame {
     private final JButton runParButton     = new JButton("Run Parallel");
     private final JButton stopButton       = new JButton("Stop");
     private final JButton resetButton      = new JButton("Reset");
+    private final JButton expRunnerButton  = new JButton("Single-Trial Experiments");
     private final JButton multiTrialButton = new JButton("Multi‑Trial Experiments");
+    
 
     private final JLabel estLabel          = new JLabel("π estimate: n/a");
     private final JLabel errLabel          = new JLabel("Error: n/a");
@@ -79,7 +81,8 @@ public class PiGui extends JFrame {
         buttonPanel.add(runParButton);
         buttonPanel.add(stopButton);
         buttonPanel.add(resetButton);
-        buttonPanel.add(multiTrialButton);
+        buttonPanel.add(expRunnerButton);  // Single-Trial comes first
+        buttonPanel.add(multiTrialButton); // Multi-Trial comes second
 
         JPanel statsPanel = new JPanel();
         statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
@@ -105,7 +108,8 @@ public class PiGui extends JFrame {
         runParButton.addActionListener(e -> startAnimatedRun(true));  // parallel
         stopButton.addActionListener(e -> stopAnimation());
         resetButton.addActionListener(e -> resetView());
-        multiTrialButton.addActionListener(e -> runMultiTrialDialog());
+        expRunnerButton.addActionListener(e -> runExperimentRunner()); // Single-Trial
+        multiTrialButton.addActionListener(e -> runMultiTrialDialog()); // Multi-Trial
     }
 
     private void resetView() {
@@ -232,7 +236,86 @@ public class PiGui extends JFrame {
         }
     }
 
-    // ----- multi‑trial experiment (GUI version of MultiTrialExperimentRunner) -----
+    // ----- Single-Trial Experiment Runner (PiExperimentRunner logic) -----
+
+    private void runExperimentRunner() {
+        Locale.setDefault(Locale.US);
+        
+        long[] pointSizes = {100_000L, 1_000_000L, 5_000_000L};
+        int[] threadOptions = {1, 2, 4, 8};
+        int numTasks = 4;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("PI Experiment Results (Single Trial)\n\n");
+
+        // Run experiments in a background thread to avoid freezing GUI
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                for (long N : pointSizes) {
+                    sb.append("N = ").append(N).append("\n");
+                    
+                    // Sequential implementation
+                    sb.append("\nSequential Implementation:\n");
+                    sb.append(String.format("%-10s %-10s %-10s %-10s %-10s\n",
+                            "Version", "Estimate", "Error", "Time(ms)", "Speedup"));
+                    sb.append("-".repeat(50)).append("\n");
+
+                    SimulationConfig seqConfig = new SimulationConfig(N, numTasks, 1);
+                    long startSeq = System.nanoTime();
+                    final double seqEstimate = seqEstimator.estimate(seqConfig);
+                    long seqTime = System.nanoTime() - startSeq;
+                    double seqError = Math.abs(seqEstimate - Math.PI);
+
+                    sb.append(String.format("%-10s %-10.6f %-10.6f %-10d %-10s\n",
+                            "Sequential", seqEstimate, seqError, seqTime / 1_000_000, "1.00x"));
+
+                    // Parallel implementation
+                    sb.append("\nParallel Implementation:\n");
+                    sb.append(String.format("%-10s %-10s %-10s %-10s %-10s\n",
+                            "Threads", "Estimate", "Error", "Time(ms)", "Speedup"));
+                    sb.append("-".repeat(50)).append("\n");
+
+                    for (int threads : threadOptions) {
+                        SimulationConfig parConfig = new SimulationConfig(N, numTasks, threads);
+                        ParallelPiEstimator parEstimator = new ParallelPiEstimator();
+
+                        long startPar = System.nanoTime();
+                        double parEstimate = parEstimator.estimate(parConfig);
+                        long parTime = System.nanoTime() - startPar;
+                        double parError = Math.abs(parEstimate - Math.PI);
+                        double speedup = (double) seqTime / parTime;
+
+                        sb.append(String.format("%-10d %-10.6f %-10.6f %-10d %-1.2fx\n",
+                                threads, parEstimate, parError, parTime / 1_000_000, speedup));
+                    }
+                    sb.append("\n").append("=".repeat(60)).append("\n\n");
+                    
+                    // Give Swing a chance to update if needed
+                    Thread.yield();
+                }
+
+                sb.append("\n End of Experiments \n");
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Display results when complete
+                JTextArea area = new JTextArea(sb.toString(), 30, 80);
+                area.setEditable(false);
+                area.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+                JScrollPane scroll = new JScrollPane(area);
+
+                JOptionPane.showMessageDialog(PiGui.this, scroll,
+                        "Single-Trial Experiment Results", JOptionPane.INFORMATION_MESSAGE);
+            }
+        };
+        
+        worker.execute();
+    }
+
+    // ----- Multi‑Trial experiment (GUI version of MultiTrialExperimentRunner) -----
 
     private void runMultiTrialDialog() {
         Locale.setDefault(Locale.US);
@@ -243,7 +326,7 @@ public class PiGui extends JFrame {
         int    trials       = 5;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Multi‑Trial π Experiment\n\n");
+        sb.append("Multi‑Trial π Experiment (5 trials per configuration)\n\n");
 
         for (long N : pointSizes) {
             sb.append("Total points N = ").append(N).append("\n\n");
